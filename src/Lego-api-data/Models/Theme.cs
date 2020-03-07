@@ -39,7 +39,7 @@ namespace Lego_api_data.Models
                 .HasMany(x => x.Sets)
                 .WithOne(x => x.SetTheme)
                 .HasForeignKey(x => x.ThemeId)
-                .HasConstraintName("FK__Sets__theme_id__38996AB5");
+                .HasConstraintName("FK_sets_themes_theme_id");
 
             themeBuilder
                 .Ignore(x => x.ParentTheme);
