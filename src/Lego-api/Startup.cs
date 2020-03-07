@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 
 namespace Lego_api
 {
@@ -21,6 +22,13 @@ namespace Lego_api
         {
             services.AddControllers();
 
+            services.AddMvc();
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My Lego API", Version = "3.0.0" });
+            });
+
             services.AddDbContext<LegoDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LegoDatabase")));
         }
 
@@ -31,6 +39,13 @@ namespace Lego_api
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI(x =>
+            {
+                x.SwaggerEndpoint("/swagger/v1/swagger.json", "My Lego API v1");
+            });
 
             app.UseRouting();
 
