@@ -1,4 +1,5 @@
 using Lego_api_data;
+using Lego_api.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -24,10 +25,7 @@ namespace Lego_api
 
             services.AddMvc();
 
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My Lego API", Version = "3.0.0" });
-            });
+            services.AddSwagger();
 
             services.AddDbContext<LegoDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LegoDatabase")));
         }
@@ -41,11 +39,6 @@ namespace Lego_api
             }
 
             app.UseSwagger();
-
-            app.UseSwaggerUI(x =>
-            {
-                x.SwaggerEndpoint("/swagger/v1/swagger.json", "My Lego API v1");
-            });
 
             app.UseRouting();
 
