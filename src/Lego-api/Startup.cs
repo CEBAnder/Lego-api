@@ -1,12 +1,9 @@
-using Lego_api_data;
 using Lego_api.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
 
 namespace Lego_api
 {
@@ -27,7 +24,7 @@ namespace Lego_api
 
             services.AddSwagger();
 
-            services.AddDbContext<LegoDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LegoDatabase")));
+            services.AddDatabase(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -38,7 +35,7 @@ namespace Lego_api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseSwagger();
+            app.UseSwaggerExtension();
 
             app.UseRouting();
 

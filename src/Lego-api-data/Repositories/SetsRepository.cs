@@ -5,5 +5,7 @@ namespace Lego_api_data.Repositories
 {
     public class SetsRepository : MsSQLRepository<Set>
     {
+        public SetsRepository(LegoDbContext dbContext) : base(dbContext)
+        { }
     }
 }

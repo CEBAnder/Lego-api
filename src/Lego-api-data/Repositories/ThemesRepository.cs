@@ -5,5 +5,7 @@ namespace Lego_api_data.Repositories
 {
     public class ThemesRepository : MsSQLRepository<Theme>
     {
+        public ThemesRepository(LegoDbContext dbContext) : base(dbContext)
+        { }
     }
 }
