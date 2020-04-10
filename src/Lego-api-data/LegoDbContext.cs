@@ -1,4 +1,5 @@
-﻿using Lego_api_data.Models;
+﻿using Lego_api_data.Helpers;
+using Lego_api_data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lego_api_data
@@ -14,9 +15,9 @@ namespace Lego_api_data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            Theme.Configure(modelBuilder);
-
-            Models.Set.Configure(modelBuilder);
+            modelBuilder
+                .ConfigureSets()
+                .ConfigureThemes();
         }
     }
 }
