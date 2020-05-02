@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Lego_api_bot.Models;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Lego_api_bot.Features
 {
@@ -40,12 +42,31 @@ namespace Lego_api_bot.Features
             
             _botClient.StartReceiving();
             _botClient.OnMessage += ProcessMessage;
+            _botClient.OnCallbackQuery += _botClient_OnCallbackQuery;
+            _botClient.OnInlineQuery += _botClient_OnInlineQuery;            
         }
 
-        private static async void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        private static void _botClient_OnInlineQuery(object sender, Telegram.Bot.Args.InlineQueryEventArgs e)
+        {
+            _logger.Information("_botClient_OnInlineQuery");
+        }
+
+        private static void _botClient_OnCallbackQuery(object sender, Telegram.Bot.Args.CallbackQueryEventArgs e)
+        {
+            _logger.Information("_botClient_OnCallbackQuery");
+        }
+
+        private static void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
         {
             var message = e.Message;
-            await _botClient.SendTextMessageAsync(message.Chat, "Hello world");
+            var response = MessageProcessor.ProcessMessage(message);
+            SendResponse(response);
+        }
+
+        private static async void SendResponse(ResponseParams response)
+        {
+            await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText, 
+                replyMarkup: response.HasCallbackButtons ? new InlineKeyboardMarkup(response.ResponseButtons) : null);
         }
     }
 }
