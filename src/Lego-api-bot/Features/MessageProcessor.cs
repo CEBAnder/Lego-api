@@ -17,20 +17,18 @@ namespace Lego_api_bot.Features
         private static ResponseParams CreateWelcomeMessage(long chatId)
         {
             var welcomeText = "Привет, как будем искать наборы?";
-            var byThemeButton = new InlineKeyboardButton
+            var byThemeButton = new KeyboardButton
             {
-                Text = "По темам",
-                CallbackData = "byTheme"
+                Text = "По темам"                
             };
-            var byYears = new InlineKeyboardButton
+            var byYears = new KeyboardButton
             {
-                Text = "По году выхода",
-                CallbackData = "byYears"
+                Text = "По году выхода"
             };
 
             var response = new ResponseParams(chatId, welcomeText)
             { 
-                ResponseButtons = new List<InlineKeyboardButton> { byThemeButton, byYears }
+                ResponseMarkup = new ReplyKeyboardMarkup(new List<KeyboardButton> { byThemeButton, byYears })
             };
             return response;
         }

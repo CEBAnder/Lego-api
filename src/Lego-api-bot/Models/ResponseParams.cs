@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Telegram.Bot.Types.ReplyMarkups;
+﻿using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Lego_api_bot.Models
 {
@@ -9,9 +8,7 @@ namespace Lego_api_bot.Models
 
         public string ResponseText { get; set; }
 
-        public bool HasCallbackButtons => ResponseButtons != null;
-
-        public List<InlineKeyboardButton> ResponseButtons { get; set; }
+        public IReplyMarkup ResponseMarkup { get; set; }
 
         public ResponseParams(long chatId, string responseText)
         {

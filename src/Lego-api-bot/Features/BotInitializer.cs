@@ -1,6 +1,7 @@
 ﻿using Lego_api_bot.Models;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace Lego_api_bot.Features
 
             _logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
-                .WriteTo.Console()
+                .WriteTo.Console(outputTemplate: "[{Timestamp:dd.MM HH:mm:ss}][{Level}] {Message}{NewLine}{Exception}")
                 .CreateLogger();
 
             HttpClientHandler clientHandler = new HttpClientHandler();
@@ -56,17 +57,24 @@ namespace Lego_api_bot.Features
             _logger.Information("_botClient_OnCallbackQuery");
         }
 
-        private static void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        private static async void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
         {
-            var message = e.Message;
-            var response = MessageProcessor.ProcessMessage(message);
-            SendResponse(response);
+            try
+            {
+                var message = e.Message;
+                var response = MessageProcessor.ProcessMessage(message);
+                await SendResponse(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Got error while processing message");
+            }
         }
 
-        private static async void SendResponse(ResponseParams response)
+        private static async Task SendResponse(ResponseParams response)
         {
             await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText, 
-                replyMarkup: response.HasCallbackButtons ? new InlineKeyboardMarkup(response.ResponseButtons) : null);
+                replyMarkup: response.ResponseMarkup);
         }
     }
 }
