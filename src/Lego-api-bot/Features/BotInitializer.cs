@@ -1,77 +1,75 @@
 ﻿using Lego_api_bot.Models;
 using Microsoft.Extensions.Configuration;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
-using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Lego_api_bot.Features
 {
     public class BotInitializer
     {
-        static TelegramBotClient _botClient;
-        static ILogger _logger;
+        private readonly TelegramBotClient _botClient;
+        private readonly MessageProcessor _messageProcessor;
+        private readonly ILogger<BotInitializer> _logger;
 
-        static BotInitializer()
+        public BotInitializer(IConfiguration config, MessageProcessor messageProcessor, ILogger<BotInitializer> logger)
         {
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", true)
-                .Build();
-
-            _logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .WriteTo.Console(outputTemplate: "[{Timestamp:dd.MM HH:mm:ss}][{Level}] {Message}{NewLine}{Exception}")
-                .CreateLogger();
+            var token = config["BotToken"] ?? throw new ArgumentNullException(nameof(config));
+            _messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(config));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));            
 
             HttpClientHandler clientHandler = new HttpClientHandler();
             clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
-
-            HttpClient client = new HttpClient(clientHandler);
-
-            var token = config["BotToken"];
+            HttpClient client = new HttpClient(clientHandler);            
             _botClient = new TelegramBotClient(token, client);
         }
 
-        public static async Task StartWork()
+        public async Task StartWork()
         {
-            var me = await _botClient.GetMeAsync();
-            _logger.Information($"My id: {me.Id} my name: {me.FirstName} {me.LastName}");
+            try
+            {
+                var me = await _botClient.GetMeAsync();
+                _botClient.StartReceiving();
+                _logger.LogInformation($"My id: {me.Id} my name: {me.FirstName} {me.LastName}");                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Got error while starting bot's work");
+                throw;
+            }
             
-            _botClient.StartReceiving();
             _botClient.OnMessage += ProcessMessage;
             _botClient.OnCallbackQuery += _botClient_OnCallbackQuery;
             _botClient.OnInlineQuery += _botClient_OnInlineQuery;            
         }
 
-        private static void _botClient_OnInlineQuery(object sender, Telegram.Bot.Args.InlineQueryEventArgs e)
+        private void _botClient_OnInlineQuery(object sender, Telegram.Bot.Args.InlineQueryEventArgs e)
         {
-            _logger.Information("_botClient_OnInlineQuery");
+            _logger.LogInformation("_botClient_OnInlineQuery");
         }
 
-        private static void _botClient_OnCallbackQuery(object sender, Telegram.Bot.Args.CallbackQueryEventArgs e)
+        private void _botClient_OnCallbackQuery(object sender, Telegram.Bot.Args.CallbackQueryEventArgs e)
         {
-            _logger.Information("_botClient_OnCallbackQuery");
+            _logger.LogInformation("_botClient_OnCallbackQuery");
         }
 
-        private static async void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        private async void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
         {
             try
             {
                 var message = e.Message;
-                var response = MessageProcessor.ProcessMessage(message);
+                var response = _messageProcessor.ProcessMessage(message);
                 await SendResponse(response);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Got error while processing message");
+                _logger.LogError(ex, "Got error while processing message");
             }
         }
 
-        private static async Task SendResponse(ResponseParams response)
+        private async Task SendResponse(ResponseParams response)
         {
             await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText, 
                 replyMarkup: response.ResponseMarkup);

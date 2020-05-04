@@ -1,4 +1,6 @@
 ﻿using Lego_api_bot.Models;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -7,10 +9,26 @@ namespace Lego_api_bot.Features
 {
     public class MessageProcessor
     {
-        public static ResponseParams ProcessMessage(Message incomingMessage)
+        private readonly ILogger<MessageProcessor> _logger;
+
+        public MessageProcessor(ILogger<MessageProcessor> logger)
         {
-            if (incomingMessage.Text == "/start")
-                return CreateWelcomeMessage(incomingMessage.Chat.Id);
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public ResponseParams ProcessMessage(Message incomingMessage)
+        {
+            _logger.LogInformation($"Processing message with text: {incomingMessage.Text}");
+            switch (incomingMessage.Text)
+            {
+                case "/start":
+                    return CreateWelcomeMessage(incomingMessage.Chat.Id);
+                case "По темам":
+                    return null;
+                case "По году выхода":
+                    return null;
+            }
+
             return null;
         }
 
@@ -31,6 +49,11 @@ namespace Lego_api_bot.Features
                 ResponseMarkup = new ReplyKeyboardMarkup(new List<KeyboardButton> { byThemeButton, byYears })
             };
             return response;
+        }
+
+        private static ResponseParams CreateMessageWithThemesSearch(long chatId)
+        {
+            return null;
         }
     }
 }
