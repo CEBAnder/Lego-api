@@ -1,9 +1,7 @@
-﻿using Lego_api_bot.Features;
-using Lego_api_data;
-using Microsoft.EntityFrameworkCore;
+﻿using Lego_api_bot.Extensions;
+using Lego_api_bot.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,10 +12,9 @@ namespace Lego_api_bot
     {
         static async Task Main(string[] args)
         {
-            var config = GetConfiguration();
-            var services = ConfigureServices(config);
-            
-            var serviceProvider = services.BuildServiceProvider();
+            var config = GetConfiguration();            
+            var serviceProvider = ConfigureServices(config);
+
             var botInitializer = serviceProvider.GetService<BotInitializer>();
             await botInitializer.StartWork();
 
@@ -34,25 +31,17 @@ namespace Lego_api_bot
             return config;
         }
 
-        private static IServiceCollection ConfigureServices(IConfiguration configuration)
+        private static ServiceProvider ConfigureServices(IConfiguration configuration)
         {
             var services = new ServiceCollection();
 
-            services.AddDbContext<LegoDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DbConnectionString")));
+            services
+                .AddConfuguration(configuration)
+                .AddDatabase(configuration)
+                .AddCustomLogging(configuration)
+                .AddFeatures();
 
-            var defaultLogger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .WriteTo.Console(outputTemplate: "[{Timestamp:dd.MM HH:mm:ss}][{Level}] {Message}{NewLine}{Exception}")
-                .CreateLogger();
-
-            services.AddLogging(x => x.AddSerilog(defaultLogger, true));
-
-            services.AddSingleton(configuration);
-
-            services.AddSingleton<BotInitializer>();
-            services.AddSingleton<MessageProcessor>();
-
-            return services;
+            return services.BuildServiceProvider();
         }
     }
 }
