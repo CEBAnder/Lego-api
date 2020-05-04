@@ -1,5 +1,8 @@
 ﻿using Lego_api_bot.Features;
 using Lego_api_data;
+using Lego_api_data.Helpers;
+using Lego_api_data.Models;
+using Lego_api_data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +21,9 @@ namespace Lego_api_bot.Extensions
 
         public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<LegoDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DbConnectionString")));
+            services.AddDbContext<LegoDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("LegoDatabase")));
+            services.AddScoped<IRepository<Theme>, ThemesRepository>();
+            services.AddScoped<IRepository<Set>, SetsRepository>();
 
             return services;
         }
@@ -36,8 +41,8 @@ namespace Lego_api_bot.Extensions
 
         public static IServiceCollection AddFeatures(this IServiceCollection services)
         {
-            services.AddSingleton<BotInitializer>();
-            services.AddSingleton<MessageProcessor>();
+            services.AddScoped<BotInitializer>();
+            services.AddScoped<MessageProcessor>();
 
             return services;
         }

@@ -5,6 +5,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 
 namespace Lego_api_bot.Features
 {
@@ -50,9 +51,18 @@ namespace Lego_api_bot.Features
             _logger.LogInformation("_botClient_OnInlineQuery");
         }
 
-        private void _botClient_OnCallbackQuery(object sender, Telegram.Bot.Args.CallbackQueryEventArgs e)
+        private async void _botClient_OnCallbackQuery(object sender, Telegram.Bot.Args.CallbackQueryEventArgs e)
         {
-            _logger.LogInformation("_botClient_OnCallbackQuery");
+            try
+            {
+                var callbackData = e.CallbackQuery;
+                var response = await _messageProcessor.ProcessMessage(callbackData.Message.Chat.Id, callbackData.Data);
+                await SendResponse(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Got error while processing callback query");
+            }
         }
 
         private async void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
@@ -60,7 +70,7 @@ namespace Lego_api_bot.Features
             try
             {
                 var message = e.Message;
-                var response = _messageProcessor.ProcessMessage(message);
+                var response = await _messageProcessor.ProcessMessage(message.Chat.Id, message.Text);
                 await SendResponse(response);
             }
             catch (Exception ex)
@@ -72,7 +82,7 @@ namespace Lego_api_bot.Features
         private async Task SendResponse(ResponseParams response)
         {
             await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText, 
-                replyMarkup: response.ResponseMarkup);
+                replyMarkup: response.ResponseMarkup, parseMode: ParseMode.Html);
         }
     }
 }
