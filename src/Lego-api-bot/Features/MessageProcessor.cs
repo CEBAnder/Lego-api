@@ -1,5 +1,6 @@
 ﻿using Lego_api_bot.Models;
 using Lego_api_data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -59,120 +60,27 @@ namespace Lego_api_bot.Features
         private async Task<ResponseParams> CreateMessageWithThemesSearch(long chatId, int pageNum)
         {
             var pageSize = 10;
+            var pageIndex = pageNum - 1;
 
-            var themes = _dbContext.Themes.Where(x => x.ThemeId > pageSize * (pageNum - 1) && x.ThemeId <= pageSize * pageNum).OrderBy(x => x.ThemeId).ToList();            
+            var themes = await _dbContext.Themes.Take(pageSize).Skip(pageSize * pageIndex).OrderBy(x => x.ThemeId).ToListAsync();
 
             var sb = new StringBuilder();
-
             for(int i = 0; i < themes.Count; i++)
             {
-                sb.Append($"{i + pageSize * (pageNum - 1) + 1}. <b>{themes[i].Name}</b>").Append(Environment.NewLine);
+                sb.Append($"{i + 1 + pageSize * pageIndex}. <b>{themes[i].Name}</b>").Append(Environment.NewLine);
             }
 
             var totalCount = _dbContext.Themes.Count();
-            var pagesCount = totalCount / pageSize + (totalCount % pageSize == 0 ? 0 : 1);
-            var pagingButtons = CreatePagingButtons(pagesCount, pageNum);
+            var hasRemaining = totalCount % pageSize != 0;
+            var pagesCount = totalCount / pageSize + (hasRemaining ? 1 : 0);
+
+            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum);
 
             var response = new ResponseParams(chatId, sb.ToString())
             {
                 ResponseMarkup = new InlineKeyboardMarkup(pagingButtons)
             };
             return response;
-        }
-
-        private List<InlineKeyboardButton> CreatePagingButtons(int pagesCount, int currentPage)
-        {
-            if (pagesCount == 1)
-                return null;
-
-            var pagingButtons = new List<InlineKeyboardButton>();
-            if (pagesCount >= 2 && pagesCount <= 5)
-            {
-                for (int i = 1; i <= pagesCount; i++)
-                {
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = i == currentPage ? $"•{i}•": $"{i}",
-                        CallbackData = i.ToString()
-                    });
-                }
-            }
-            else
-            {
-                if (currentPage >= 1 && currentPage <= 3)
-                {
-                    for (int i = 1; i <= 3; i++)
-                    {
-                        pagingButtons.Add(new InlineKeyboardButton
-                        {
-                            Text = i == currentPage ? $"•{i}•" : $"{i}",
-                            CallbackData = i.ToString()
-                        });
-                    }
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = "4>",
-                        CallbackData = "4"
-                    });
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = $"{pagesCount}>>",
-                        CallbackData = pagesCount.ToString()
-                    });
-                    return pagingButtons;
-                }
-                if (currentPage >= pagesCount - 2 && currentPage <= pagesCount)
-                {
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = "<<1",
-                        CallbackData = "1"
-                    });
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = $"<{pagesCount - 3}",
-                        CallbackData = (pagesCount - 3).ToString()
-                    });
-                    for (int i = pagesCount - 2; i <= pagesCount; i++)
-                    {
-                        pagingButtons.Add(new InlineKeyboardButton
-                        {
-                            Text = i == currentPage ? $"•{i}•" : $"{i}",
-                            CallbackData = i.ToString()
-                        });
-                    }
-                }
-                else
-                {
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = "<<1",
-                        CallbackData = "1"
-                    });
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = $"<{currentPage - 1}",
-                        CallbackData = (currentPage - 1).ToString()
-                    });
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = currentPage.ToString(),
-                        CallbackData = currentPage.ToString()
-                    });
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = $"{currentPage + 1}>",
-                        CallbackData = (currentPage + 1).ToString()
-                    });
-                    pagingButtons.Add(new InlineKeyboardButton
-                    {
-                        Text = $"{pagesCount}>>",
-                        CallbackData = pagesCount.ToString()
-                    });
-                }
-            }
-
-            return pagingButtons;
         }
     }
 }
