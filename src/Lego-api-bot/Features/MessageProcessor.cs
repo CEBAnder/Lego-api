@@ -62,7 +62,7 @@ namespace Lego_api_bot.Features
             var pageSize = 10;
             var pageIndex = pageNum - 1;
 
-            var themes = await _dbContext.Themes.Take(pageSize).Skip(pageSize * pageIndex).OrderBy(x => x.ThemeId).ToListAsync();
+            var themes = await _dbContext.Themes.Skip(pageSize * pageIndex).Take(pageSize).OrderBy(x => x.ThemeId).ToListAsync();
 
             var sb = new StringBuilder();
             for(int i = 0; i < themes.Count; i++)
