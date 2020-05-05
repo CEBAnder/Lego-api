@@ -5,7 +5,7 @@ namespace Lego_api_bot.Features
 {
     public class PagingButtonCreator
     {
-        public static List<InlineKeyboardButton> CreatePagingButtons(int pagesCount, int currentPage)
+        public static List<InlineKeyboardButton> CreatePagingButtons(int pagesCount, int currentPage, string sourceName)
         {
             if (pagesCount == 1)
                 return null;
@@ -17,7 +17,7 @@ namespace Lego_api_bot.Features
             {
                 for (int i = 1; i <= pagesCount; i++)
                 {
-                    pagingButtons.Add(CreateDefaultPagingButton(currentPage, i));
+                    pagingButtons.Add(CreateDefaultPagingButton(currentPage, i, sourceName));
                 }
             }
             else
@@ -27,91 +27,91 @@ namespace Lego_api_bot.Features
                 {
                     for (int i = 1; i <= 3; i++)
                     {
-                        pagingButtons.Add(CreateDefaultPagingButton(currentPage, i));
+                        pagingButtons.Add(CreateDefaultPagingButton(currentPage, i, sourceName));
                     }
-                    pagingButtons.Add(CreateNextPageButton(3));
-                    pagingButtons.Add(CreateLastPageButton(pagesCount));
+                    pagingButtons.Add(CreateNextPageButton(3, sourceName));
+                    pagingButtons.Add(CreateLastPageButton(pagesCount, sourceName));
                     return pagingButtons;
                 }
                 if (currentPage >= pagesCount - 2 && 
                     currentPage <= pagesCount)
                 {
-                    pagingButtons.Add(CreateFirstPageButton());
-                    pagingButtons.Add(CreatePreviousPageButton(pagesCount - 2));
+                    pagingButtons.Add(CreateFirstPageButton(sourceName));
+                    pagingButtons.Add(CreatePreviousPageButton(pagesCount - 2, sourceName));
                     for (int i = pagesCount - 2; i <= pagesCount; i++)
                     {
-                        pagingButtons.Add(CreateDefaultPagingButton(currentPage, i));
+                        pagingButtons.Add(CreateDefaultPagingButton(currentPage, i, sourceName));
                     }
                 }
                 else
                 {
-                    pagingButtons.Add(CreateFirstPageButton());
-                    pagingButtons.Add(CreatePreviousPageButton(currentPage));
-                    pagingButtons.Add(CreateDefaultPagingButton(currentPage, currentPage));
-                    pagingButtons.Add(CreateNextPageButton(currentPage));
-                    pagingButtons.Add(CreateLastPageButton(pagesCount));
+                    pagingButtons.Add(CreateFirstPageButton(sourceName));
+                    pagingButtons.Add(CreatePreviousPageButton(currentPage, sourceName));
+                    pagingButtons.Add(CreateDefaultPagingButton(currentPage, currentPage, sourceName));
+                    pagingButtons.Add(CreateNextPageButton(currentPage, sourceName));
+                    pagingButtons.Add(CreateLastPageButton(pagesCount, sourceName));
                 }
             }
 
             return pagingButtons;
         }
 
-        private static InlineKeyboardButton CreateDefaultPagingButton(int pageNum, int indexerValue)
+        private static InlineKeyboardButton CreateDefaultPagingButton(int pageNum, int indexerValue, string sourceName)
         {
             if (pageNum == indexerValue)
             {
-                return CreateDefaultCurrentPageButton(pageNum);
+                return CreateDefaultCurrentPageButton(pageNum, sourceName);
             }
 
             return new InlineKeyboardButton
             {
                 Text = $"{indexerValue}",
-                CallbackData = indexerValue.ToString()
+                CallbackData = $"{sourceName}/{indexerValue}"
             };
         }
 
-        private static InlineKeyboardButton CreateDefaultCurrentPageButton(int pageNum)
+        private static InlineKeyboardButton CreateDefaultCurrentPageButton(int pageNum, string sourceName)
         {
             return new InlineKeyboardButton
             {
                 Text = $"•{pageNum}•",
-                CallbackData = pageNum.ToString()
+                CallbackData = $"{sourceName}/{pageNum}"
             };
         }
 
-        private static InlineKeyboardButton CreateFirstPageButton()
+        private static InlineKeyboardButton CreateFirstPageButton(string sourceName)
         {
             return new InlineKeyboardButton
             {
                 Text = "<<1",
-                CallbackData = "1"
+                CallbackData = $"{sourceName}/1"
             };
         }
 
-        private static InlineKeyboardButton CreatePreviousPageButton(int currentPageNum)
+        private static InlineKeyboardButton CreatePreviousPageButton(int currentPageNum, string sourceName)
         {
             return new InlineKeyboardButton
             {
                 Text = $"<{currentPageNum - 1}",
-                CallbackData = (currentPageNum - 1).ToString()
+                CallbackData = $"{sourceName}/{currentPageNum - 1}"
             };
         }
 
-        private static InlineKeyboardButton CreateNextPageButton(int currentPageNum)
+        private static InlineKeyboardButton CreateNextPageButton(int currentPageNum, string sourceName)
         {
             return new InlineKeyboardButton
             {
                 Text = $"{currentPageNum + 1}>",
-                CallbackData = (currentPageNum + 1).ToString()
+                CallbackData = $"{sourceName}/{currentPageNum + 1}"
             };
         }
 
-        private static InlineKeyboardButton CreateLastPageButton(int lastPageNum)
+        private static InlineKeyboardButton CreateLastPageButton(int lastPageNum, string sourceName)
         {
             return new InlineKeyboardButton
             {
                 Text = $"{lastPageNum}>>",
-                CallbackData = lastPageNum.ToString()
+                CallbackData = $"{sourceName}/{lastPageNum}"
             };
         }
     }

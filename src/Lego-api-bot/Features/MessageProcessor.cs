@@ -15,6 +15,9 @@ namespace Lego_api_bot.Features
     {
         private readonly LegoDbContext _dbContext;
         private readonly ILogger<MessageProcessor> _logger;
+        
+        private const string ThemeSourceName = "themes";
+        private const string YearsSourceName = "years";
 
         public MessageProcessor(LegoDbContext legoDbContext, ILogger<MessageProcessor> logger)
         {
@@ -32,7 +35,19 @@ namespace Lego_api_bot.Features
                 case "По темам":
                     return await CreateMessageWithThemesSearch(chatId, 1);
                 case "По году выхода":
-                    return null;
+                    return await CreateMessageWithYearsSearch(chatId, 1);
+            }
+
+            var messageData = textData.Split("/");
+            var sourceName = messageData[0];
+            var pageNum = Convert.ToInt32(messageData[1]);
+
+            switch (sourceName)
+            {
+                case ThemeSourceName:
+                    return await CreateMessageWithThemesSearch(chatId, pageNum);
+                case YearsSourceName:
+                    return await CreateMessageWithYearsSearch(chatId, pageNum);
             }
 
             return await CreateMessageWithThemesSearch(chatId, Convert.ToInt32(textData));
@@ -62,20 +77,58 @@ namespace Lego_api_bot.Features
             var pageSize = 10;
             var pageIndex = pageNum - 1;
 
-            var themes = await _dbContext.Themes.Skip(pageSize * pageIndex).Take(pageSize).OrderBy(x => x.ThemeId).ToListAsync();
+            var themes = await _dbContext.Themes
+                .Where(x => x.ParentId == null)
+                .OrderBy(x => x.Name)
+                .Skip(pageSize * pageIndex)
+                .Take(pageSize)
+                .ToListAsync();
 
             var sb = new StringBuilder();
             for(int i = 0; i < themes.Count; i++)
             {
                 sb.Append($"{i + 1 + pageSize * pageIndex}. <b>{themes[i].Name}</b>{Environment.NewLine}")
-                    .Append($"  Наборы по этой теме: /tid_{themes[i].ThemeId}{Environment.NewLine}");
+                    .Append($"      Наборы по этой теме: /tid_{themes[i].ThemeId}{Environment.NewLine}");
             }
 
-            var totalCount = _dbContext.Themes.Count();
+            var totalCount = await _dbContext.Themes.Where(x => x.ParentId == null).CountAsync();
             var hasRemaining = totalCount % pageSize != 0;
             var pagesCount = totalCount / pageSize + (hasRemaining ? 1 : 0);
 
-            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum);
+            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum, ThemeSourceName);
+
+            var response = new ResponseParams(chatId, sb.ToString())
+            {
+                ResponseMarkup = new InlineKeyboardMarkup(pagingButtons)
+            };
+            return response;
+        }
+
+        private async Task<ResponseParams> CreateMessageWithYearsSearch(long chatId, int pageNum)
+        {
+            var pageSize = 10;
+            var pageIndex = pageNum - 1;
+
+            var years = await _dbContext.Sets
+                .Select(x => x.Year)
+                .Distinct()
+                .OrderBy(x => x)
+                .Skip(pageSize * pageIndex)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < years.Count; i++)
+            {
+                sb.Append($"{i + 1 + pageSize * pageIndex}. <b>{years[i]}</b>{Environment.NewLine}")
+                    .Append($"      Наборы в этом году: /yid_{years[i]}{Environment.NewLine}");
+            }
+
+            var totalCount = await _dbContext.Sets.Select(x => x.Year).Distinct().CountAsync();
+            var hasRemaining = totalCount % pageSize != 0;
+            var pagesCount = totalCount / pageSize + (hasRemaining ? 1 : 0);
+
+            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum, YearsSourceName);
 
             var response = new ResponseParams(chatId, sb.ToString())
             {
