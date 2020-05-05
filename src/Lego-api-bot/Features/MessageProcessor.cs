@@ -67,7 +67,8 @@ namespace Lego_api_bot.Features
             var sb = new StringBuilder();
             for(int i = 0; i < themes.Count; i++)
             {
-                sb.Append($"{i + 1 + pageSize * pageIndex}. <b>{themes[i].Name}</b>").Append(Environment.NewLine);
+                sb.Append($"{i + 1 + pageSize * pageIndex}. <b>{themes[i].Name}</b>{Environment.NewLine}")
+                    .Append($"  Наборы по этой теме: /tid_{themes[i].ThemeId}{Environment.NewLine}");
             }
 
             var totalCount = _dbContext.Themes.Count();
