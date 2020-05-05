@@ -1,11 +1,12 @@
-﻿using Lego_api_bot.Models;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Args;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Lego_api_bot.Features
 {
@@ -42,7 +43,7 @@ namespace Lego_api_bot.Features
             }
             
             _botClient.OnMessage += ProcessMessage;
-            _botClient.OnCallbackQuery += _botClient_OnCallbackQuery;
+            _botClient.OnCallbackQuery += ProcessCallback;
             _botClient.OnInlineQuery += _botClient_OnInlineQuery;            
         }
 
@@ -51,27 +52,14 @@ namespace Lego_api_bot.Features
             _logger.LogInformation("_botClient_OnInlineQuery");
         }
 
-        private async void _botClient_OnCallbackQuery(object sender, Telegram.Bot.Args.CallbackQueryEventArgs e)
-        {
-            try
-            {
-                var callbackData = e.CallbackQuery;
-                var response = await _messageProcessor.ProcessMessage(callbackData.Message.Chat.Id, callbackData.Data);
-                await SendResponse(response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Got error while processing callback query");
-            }
-        }
-
-        private async void ProcessMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        private async void ProcessMessage(object sender, MessageEventArgs e)
         {
             try
             {
                 var message = e.Message;
                 var response = await _messageProcessor.ProcessMessage(message.Chat.Id, message.Text);
-                await SendResponse(response);
+                await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText,
+                    replyMarkup: response.ResponseMarkup, parseMode: ParseMode.Html);
             }
             catch (Exception ex)
             {
@@ -79,10 +67,19 @@ namespace Lego_api_bot.Features
             }
         }
 
-        private async Task SendResponse(ResponseParams response)
+        private async void ProcessCallback(object sender, CallbackQueryEventArgs e)
         {
-            await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText, 
-                replyMarkup: response.ResponseMarkup, parseMode: ParseMode.Html);
+            try
+            {
+                var callbackData = e.CallbackQuery;
+                var response = await _messageProcessor.ProcessMessage(callbackData.Message.Chat.Id, callbackData.Data);
+                await _botClient.EditMessageTextAsync(callbackData.Message.Chat.Id, callbackData.Message.MessageId, response.ResponseText,
+                    replyMarkup: (InlineKeyboardMarkup)response.ResponseMarkup, parseMode: ParseMode.Html);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Got error while processing callback query");
+            }
         }
     }
 }
