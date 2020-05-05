@@ -37,7 +37,7 @@ namespace Lego_api_bot.Features
                     currentPage <= pagesCount)
                 {
                     pagingButtons.Add(CreateFirstPageButton());
-                    pagingButtons.Add(CreatePreviousPageButton(currentPage));
+                    pagingButtons.Add(CreatePreviousPageButton(pagesCount - 2));
                     for (int i = pagesCount - 2; i <= pagesCount; i++)
                     {
                         pagingButtons.Add(CreateDefaultPagingButton(currentPage, i));
@@ -65,8 +65,8 @@ namespace Lego_api_bot.Features
 
             return new InlineKeyboardButton
             {
-                Text = $"{pageNum}",
-                CallbackData = pageNum.ToString()
+                Text = $"{indexerValue}",
+                CallbackData = indexerValue.ToString()
             };
         }
 
