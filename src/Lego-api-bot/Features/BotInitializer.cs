@@ -43,13 +43,7 @@ namespace Lego_api_bot.Features
             }
             
             _botClient.OnMessage += ProcessMessage;
-            _botClient.OnCallbackQuery += ProcessCallback;
-            _botClient.OnInlineQuery += _botClient_OnInlineQuery;            
-        }
-
-        private void _botClient_OnInlineQuery(object sender, Telegram.Bot.Args.InlineQueryEventArgs e)
-        {
-            _logger.LogInformation("_botClient_OnInlineQuery");
+            _botClient.OnCallbackQuery += ProcessCallback;       
         }
 
         private async void ProcessMessage(object sender, MessageEventArgs e)
@@ -58,7 +52,8 @@ namespace Lego_api_bot.Features
             {
                 var message = e.Message;
                 var response = await _messageProcessor.ProcessMessage(message.Chat.Id, message.Text);
-                await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText,
+                await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText, 
+                    disableWebPagePreview: true, disableNotification: true,
                     replyMarkup: response.ResponseMarkup, parseMode: ParseMode.Html);
             }
             catch (Exception ex)
@@ -74,6 +69,7 @@ namespace Lego_api_bot.Features
                 var callbackData = e.CallbackQuery;
                 var response = await _messageProcessor.ProcessMessage(callbackData.Message.Chat.Id, callbackData.Data);
                 await _botClient.EditMessageTextAsync(callbackData.Message.Chat.Id, callbackData.Message.MessageId, response.ResponseText,
+                    disableWebPagePreview: true, 
                     replyMarkup: (InlineKeyboardMarkup)response.ResponseMarkup, parseMode: ParseMode.Html);
             }
             catch (Exception ex)
