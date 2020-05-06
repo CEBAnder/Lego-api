@@ -5,7 +5,7 @@ namespace Lego_api_bot.Features
 {
     public class PagingButtonCreator
     {
-        public static List<InlineKeyboardButton> CreatePagingButtons(int pagesCount, int currentPage, string sourceName)
+        public static InlineKeyboardMarkup CreatePagingButtons(int pagesCount, int currentPage, string sourceName)
         {
             if (pagesCount == 1)
                 return null;
@@ -31,7 +31,7 @@ namespace Lego_api_bot.Features
                     }
                     pagingButtons.Add(CreateNextPageButton(3, sourceName));
                     pagingButtons.Add(CreateLastPageButton(pagesCount, sourceName));
-                    return pagingButtons;
+                    return new InlineKeyboardMarkup(pagingButtons);
                 }
                 if (currentPage >= pagesCount - 2 && 
                     currentPage <= pagesCount)
@@ -53,7 +53,7 @@ namespace Lego_api_bot.Features
                 }
             }
 
-            return pagingButtons;
+            return new InlineKeyboardMarkup(pagingButtons);
         }
 
         private static InlineKeyboardButton CreateDefaultPagingButton(int pageNum, int indexerValue, string sourceName)
