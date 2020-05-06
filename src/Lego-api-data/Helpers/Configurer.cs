@@ -30,6 +30,10 @@ namespace Lego_api_data.Helpers
                 .HasColumnName("num_parts");
 
             setBuilder
+                .Property(x => x.ThemeId)
+                .HasColumnName("theme_id");
+
+            setBuilder
                 .HasOne(x => x.SetTheme)
                 .WithMany(x => x.Sets)
                 .HasForeignKey(x => x.ThemeId);
