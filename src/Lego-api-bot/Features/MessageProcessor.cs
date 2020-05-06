@@ -1,6 +1,5 @@
 ﻿using Lego_api_bot.Models;
 using Lego_api_data;
-using Lego_api_data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -19,6 +18,8 @@ namespace Lego_api_bot.Features
         
         private const string ThemeSourceName = "themes";
         private const string YearsSourceName = "years";
+        private const string Theme_Sets_SourceName = "/tid";
+        private const string Years_Sets_SourceName = "/yid";
         private const string LinkPrefix = "rebrickable.com/sets/";
 
         public MessageProcessor(LegoDbContext legoDbContext, ILogger<MessageProcessor> logger)
@@ -43,21 +44,29 @@ namespace Lego_api_bot.Features
             if (textData.StartsWith('/'))
             {
                 var filterData = textData.Split('_');
-                var searchParam = filterData[0];
-                var filterValue = Convert.ToInt32(filterData[1]);
+                var paramName = filterData[0];
+                if (!int.TryParse(filterData[1], out var paramValue))
+                {
+                    paramValue = 1;
+                }
+                var pageNumber = 1;
+                if (filterData.Length == 3)
+                {
+                    int.TryParse(filterData[2], out pageNumber);
+                }
                 
-                switch (searchParam)
+                switch (paramName)
                 {
                     case "/tid":
-                        return await CreateMessageWithSetsForTheme(chatId, 1, filterValue);
+                        return await CreateMessageWithSetsForTheme(chatId, pageNumber, paramValue);
                     case "/yid":
-                        return await CreateMessageWithSetsForYear(chatId, 1, filterValue);
+                        return await CreateMessageWithSetsForYear(chatId, pageNumber, paramValue);
                 }
             }
 
-            var messageData = textData.Split('/');
+            var messageData = textData.Split('_');
             var sourceName = messageData[0];
-            var pageNum = Convert.ToInt32(messageData[1]);
+            var pageNum = Convert.ToInt32(messageData[2]);
 
             switch (sourceName)
             {
@@ -67,7 +76,7 @@ namespace Lego_api_bot.Features
                     return await CreateMessageWithYearsSearch(chatId, pageNum);
             }
 
-            return await CreateMessageWithThemesSearch(chatId, Convert.ToInt32(textData));
+            throw new Exception("No suitable code path");
         }
 
         private ResponseParams CreateWelcomeMessage(long chatId)
@@ -184,7 +193,7 @@ namespace Lego_api_bot.Features
             var hasRemaining = totalCount % pageSize != 0;
             var pagesCount = totalCount / pageSize + (hasRemaining ? 1 : 0);
 
-            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum, YearsSourceName);
+            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum, Theme_Sets_SourceName, themeId);
 
             var response = new ResponseParams(chatId, sb.ToString())
             {
@@ -216,7 +225,7 @@ namespace Lego_api_bot.Features
             var hasRemaining = totalCount % pageSize != 0;
             var pagesCount = totalCount / pageSize + (hasRemaining ? 1 : 0);
 
-            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum, YearsSourceName);
+            var pagingButtons = PagingButtonCreator.CreatePagingButtons(pagesCount, pageNum, Years_Sets_SourceName, year);
 
             var response = new ResponseParams(chatId, sb.ToString())
             {
