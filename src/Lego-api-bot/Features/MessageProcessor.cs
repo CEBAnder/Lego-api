@@ -43,37 +43,25 @@ namespace Lego_api_bot.Features
 
             if (textData.StartsWith('/'))
             {
-                var filterData = textData.Split('_');
-                var paramName = filterData[0];
-                if (!int.TryParse(filterData[1], out var paramValue))
-                {
-                    paramValue = 1;
-                }
-                var pageNumber = 1;
-                if (filterData.Length == 3)
-                {
-                    int.TryParse(filterData[2], out pageNumber);
-                }
+                var prefixPagingParams = PaginationRequestParams.FromString(textData);
                 
-                switch (paramName)
+                switch (prefixPagingParams.FilterSourceName)
                 {
-                    case "/tid":
-                        return await CreateMessageWithSetsForTheme(chatId, pageNumber, paramValue);
-                    case "/yid":
-                        return await CreateMessageWithSetsForYear(chatId, pageNumber, paramValue);
+                    case Theme_Sets_SourceName:
+                        return await CreateMessageWithSetsForTheme(chatId, prefixPagingParams.PageNum, prefixPagingParams.FilterSourceValue);
+                    case Years_Sets_SourceName:
+                        return await CreateMessageWithSetsForYear(chatId, prefixPagingParams.PageNum, prefixPagingParams.FilterSourceValue);
                 }
             }
 
-            var messageData = textData.Split('_');
-            var sourceName = messageData[0];
-            var pageNum = Convert.ToInt32(messageData[2]);
+            var pagingParams = PaginationRequestParams.FromString(textData);
 
-            switch (sourceName)
+            switch (pagingParams.FilterSourceName)
             {
                 case ThemeSourceName:
-                    return await CreateMessageWithThemesSearch(chatId, pageNum);
+                    return await CreateMessageWithThemesSearch(chatId, pagingParams.PageNum);
                 case YearsSourceName:
-                    return await CreateMessageWithYearsSearch(chatId, pageNum);
+                    return await CreateMessageWithYearsSearch(chatId, pagingParams.PageNum);
             }
 
             throw new Exception("No suitable code path");

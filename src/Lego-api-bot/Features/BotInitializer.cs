@@ -42,16 +42,17 @@ namespace Lego_api_bot.Features
                 throw;
             }
             
-            _botClient.OnMessage += ProcessMessage;
-            _botClient.OnCallbackQuery += ProcessCallback;       
+            _botClient.OnMessage += evOnMessage;
+            _botClient.OnCallbackQuery += evOnCallback;       
         }
 
-        private async void ProcessMessage(object sender, MessageEventArgs e)
+        private async void evOnMessage(object sender, MessageEventArgs e)
         {
             try
             {
                 var message = e.Message;
                 var response = await _messageProcessor.ProcessMessage(message.Chat.Id, message.Text);
+
                 await _botClient.SendTextMessageAsync(response.ChatId, response.ResponseText, 
                     disableWebPagePreview: true, disableNotification: true,
                     replyMarkup: response.ResponseMarkup, parseMode: ParseMode.Html);
@@ -62,13 +63,14 @@ namespace Lego_api_bot.Features
             }
         }
 
-        private async void ProcessCallback(object sender, CallbackQueryEventArgs e)
+        private async void evOnCallback(object sender, CallbackQueryEventArgs e)
         {
             try
             {
                 var callbackData = e.CallbackQuery;
                 var response = await _messageProcessor.ProcessMessage(callbackData.Message.Chat.Id, callbackData.Data);
-                await _botClient.EditMessageTextAsync(callbackData.Message.Chat.Id, callbackData.Message.MessageId, response.ResponseText,
+
+                await _botClient.EditMessageTextAsync(response.ChatId, callbackData.Message.MessageId, response.ResponseText,
                     disableWebPagePreview: true, 
                     replyMarkup: (InlineKeyboardMarkup)response.ResponseMarkup, parseMode: ParseMode.Html);
             }
